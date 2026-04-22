@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能医疗影像分析系统 - 统计分析</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="js/scripts.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .analysis-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .data-controls {
+            background: rgba(52, 152, 219, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .heatmap-cell {
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .trend-indicator {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .export-toolbar {
+            position: sticky;
+            top: 70px;
+            z-index: 100;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .correlation-matrix {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+        <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-heart-pulse me-2"></i>智能医疗影像分析系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-bell"></i></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-question-circle"></i></a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>张医生
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>个人资料</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html"><i class="bi bi-house-door"></i> 首页</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="upload.html"><i class="bi bi-upload"></i> 上传影像</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="analysis.htmls.html"><i class="bi bi-file-earmark-medical"></i> 分析结果</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="cases.html"><i class="bi bi-archive"></i> 病例库</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="patients.html"><i class="bi bi-people"></i> 患者管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="statistics.htmls.html"><i class="bi bi-graph-up"></i> 统计分析</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="help.html"><i class="bi bi-question-circle"></i> 帮助中心</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 py-3">
+                <div class="main-content">
+                    <!-- 数据控制区 -->
+                    <div class="data-controls">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-3">
+                                <select class="form-select" id="timeRange">
+                                    <option>过去7天</option>
+                                    <option>过去30天</option>
+                                    <option>本年度</option>
+                                    <option>自定义范围</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="analysisType">
+                                    <option>影像类型分布</option>
+                                    <option>异常病例趋势</option>
+                                    <option>患者年龄分布</option>
+                                    <option>诊断准确率</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" placeholder="输入关键词过滤...">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 导出工具栏 -->
+                    <div class="export-toolbar mb-4">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary">
+                                <i class="bi bi-filetype-pdf"></i> PDF
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="bi bi-filetype-csv"></i> CSV
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="bi bi-filetype-xlsx"></i> Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 核心分析区 -->
+                    <div class="row g-4">
+                        <!-- 主要图表 -->
+                        <div class="col-md-8">
+                            <div class="analysis-card">
+                                <h5 class="mb-4"><i class="bi bi-bar-chart-line"></i> 影像分析趋势</h5>
+                                <div class="chart-container">
+                                    <canvas id="mainTrendChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="analysis-card mt-4">
+                                <h5 class="mb-4"><i class="bi bi-geo-alt"></i> 地域分布热力图</h5>
+                                <div class="heatmap-grid">
+                                    <!-- 热力图单元格... -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 侧边统计 -->
+                        <div class="col-md-4">
+                            <div class="analysis-card">
+                                <h5 class="mb-4"><i class="bi bi-pie-chart"></i> 类型分布</h5>
+                                <div class="chart-container">
+                                    <canvas id="typePieChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="analysis-card mt-4">
+                                <h5 class="mb-4"><i class="bi bi-speedometer2"></i> 实时指标</h5>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="card text-center py-3">
+                                            <div class="text-primary trend-indicator">↑23%</div>
+                                            <div class="fw-bold">日处理量</div>
+                                            <small class="text-muted">较昨日</small>
+                                        </div>
+                                    </div>
+                                    <!-- 更多指标卡... -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 关联分析 -->
+                    <div class="analysis-card mt-4">
+                        <h5 class="mb-4"><i class="bi bi-diagram-3"></i> 多维度关联分析</h5>
+                        <div class="correlation-matrix">
+                            <canvas id="correlationMatrix"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/scripts.js"></script>
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', function () {
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        });
+        // 初始化主趋势图
+        const trendCtx = document.getElementById('mainTrendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: 'CT检查量',
+                    data: [65, 59, 80, 81, 56, 55],
+                    borderColor: '#3498db',
+                    tension: 0.4
+                }, {
+                    label: 'MRI检查量',
+                    data: [28, 48, 40, 19, 86, 27],
+                    borderColor: '#e74c3c',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 初始化饼图
+        const pieCtx = document.getElementById('typePieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['CT', 'MRI', 'X光', '超声'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能医疗影像分析系统 - 分析结果</title>
+    <link href="css/pages/analysis.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .navbar-brand {
+            font-weight: 700;
+            color: white;
+        }
+
+
+        .main-content {
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin: 20px 0;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .image-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background-color: #f1f1f1;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-toolbar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 5px 15px;
+            z-index: 10;
+        }
+
+        .image-toolbar button {
+            background: none;
+            border: none;
+            color: white;
+            margin: 0 5px;
+            font-size: 1.2rem;
+        }
+
+        .result-card {
+            border-left: 4px solid var(--primary-color);
+            border-radius: 5px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .result-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card .card-header {
+            background-color: var(--light-color);
+            font-weight: 600;
+        }
+
+        .abnormality-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .severity-high {
+            background-color: #ffdddd;
+            color: #d63031;
+            border-left: 3px solid #d63031;
+        }
+
+        .severity-medium {
+            background-color: #fff3dd;
+            color: #f39c12;
+            border-left: 3px solid #f39c12;
+        }
+
+        .severity-low {
+            background-color: #ddffdd;
+            color: #27ae60;
+            border-left: 3px solid #27ae60;
+        }
+
+        .confidence-badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .findings-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .findings-list li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .findings-list li:last-child {
+            border-bottom: none;
+        }
+
+        .progress-thin {
+            height: 8px;
+        }
+
+        .annotation-marker {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: rgba(231, 76, 60, 0.8);
+            border-radius: 50%;
+            border: 2px solid white;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+
+        .annotation-marker:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        .comparison-slider {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+        }
+
+        .comparison-slider img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .comparison-slider .divider {
+            position: absolute;
+            width: 3px;
+            height: 100%;
+            background-color: var(--accent-color);
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: ew-resize;
+        }
+
+        .comparison-slider .divider::after {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-heart-pulse me-2"></i>智能医疗影像分析系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-bell"></i></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-question-circle"></i></a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>张医生
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>个人资料</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <nav class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html"><i class="bi bi-house-door"></i> 首页</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="upload.html"><i class="bi bi-upload"></i> 上传影像</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="analysis.html"><i class="bi bi-file-earmark-medical"></i> 分析结果</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="cases.html"><i class="bi bi-archive"></i> 病例库</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="patients.html"><i class="bi bi-people"></i> 患者管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="statistics.html"><i class="bi bi-graph-up"></i> 统计分析</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="help.html"><i class="bi bi-question-circle"></i> 帮助中心</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 py-3">
+                <div class="main-content">
+                    <!-- 患者信息和影像信息 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-person-vcard me-2"></i>患者信息</h5>
+                            <div class="row">
+                                <div class="col-4"><strong>姓名:</strong> 李某某</div>
+                                <div class="col-4"><strong>性别:</strong> 男</div>
+                                <div class="col-4"><strong>年龄:</strong> 45岁</div>
+                                <div class="col-4"><strong>病历号:</strong> P2023061587</div>
+                                <div class="col-4"><strong>检查日期:</strong> 2023-06-15</div>
+                                <div class="col-4"><strong>主治医生:</strong> 张医生</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-file-earmark-image me-2"></i>影像信息</h5>
+                            <div class="row">
+                                <div class="col-4"><strong>检查类型:</strong> 胸部CT</div>
+                                <div class="col-4"><strong>设备型号:</strong> Siemens SOMATOM</div>
+                                <div class="col-4"><strong>层厚:</strong> 1.0mm</div>
+                                <div class="col-4"><strong>序列:</strong> 平扫</div>
+                                <div class="col-4"><strong>分析时间:</strong> 2023-06-15 14:30</div>
+                                <div class="col-4"><strong>分析版本:</strong> AI 3.2.1</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 影像展示和分析结果 -->
+                    <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-tab-pane" type="button">影像视图</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison-tab-pane" type="button">前后对比</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="3d-tab" data-bs-toggle="tab" data-bs-target="#3d-tab-pane" type="button">3D重建</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="analysisTabsContent">
+                        <div class="tab-pane fade show active" id="image-tab-pane" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="image-container">
+                                        <img src="https://via.placeholder.com/800x500?text=CT+影像" alt="CT影像" class="img-fluid" id="medicalImage">
+                                        <div class="annotation-marker" style="top: 30%; left: 40%;" data-bs-toggle="tooltip" data-bs-placement="top" title="肺结节 (0.8cm)"></div>
+                                        <div class="annotation-marker" style="top: 45%; left: 60%;" data-bs-toggle="tooltip" data-bs-placement="top" title="钙化灶"></div>
+                                        <div class="image-toolbar">
+                                            <button type="button" title="放大"><i class="bi bi-zoom-in"></i></button>
+                                            <button type="button" title="缩小"><i class="bi bi-zoom-out"></i></button>
+                                            <button type="button" title="原始尺寸"><i class="bi bi-fullscreen"></i></button>
+                                            <button type="button" title="窗宽窗位"><i class="bi bi-sliders"></i></button>
+                                            <button type="button" title="测量"><i class="bi bi-rulers"></i></button>
+                                            <button type="button" title="标注"><i class="bi bi-pencil"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card result-card">
+                                        <div class="card-header">AI分析摘要</div>
+                                        <div class="card-body">
+                                            <p class="card-text">系统检测到 <strong>3处异常</strong>，置信度 <span class="badge bg-success">92%</span></p>
+                                            <div class="mb-3">
+                                                <span class="abnormality-tag severity-high">肺结节</span>
+                                                <span class="abnormality-tag severity-medium">钙化灶</span>
+                                                <span class="abnormality-tag severity-low">肺气肿</span>
+                                            </div>
+                                            <div class="progress progress-thin mb-2">
+                                                <div class="progress-bar bg-danger" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <small class="text-muted">异常区域占比: 15%</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="card result-card mt-3">
+                                        <div class="card-header">关键指标</div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6 mb-2">
+                                                    <small class="text-muted">结节数量</small>
+                                                    <h5>2</h5>
+                                                </div>
+                                                <div class="col-6 mb-2">
+                                                    <small class="text-muted">最大结节尺寸</small>
+                                                    <h5>0.8 cm</h5>
+                                                </div>
+                                                <div class="col-6 mb-2">
+                                                    <small class="text-muted">平均密度</small>
+                                                    <h5>-45 HU</h5>
+                                                </div>
+                                                <div class="col-6 mb-2">
+                                                    <small class="text-muted">恶性概率</small>
+                                                    <h5>12%</h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="comparison-tab-pane" role="tabpanel">
+                            <div class="comparison-slider">
+                                <img src="https://via.placeholder.com/800x500?text=当前CT影像" alt="当前影像">
+                                <img src="https://via.placeholder.com/800x500?text=6个月前CT影像" alt="历史影像" style="width: 50%;">
+                                <div class="divider"></div>
+                            </div>
+                            <div class="text-center mt-3">
+                                <small class="text-muted">拖动中间滑块比较当前影像与2023-01-10历史影像</small>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="3d-tab-pane" role="tabpanel">
+                            <div class="image-container">
+                                <img src="https://via.placeholder.com/800x500?text=3D+重建视图" alt="3D重建" class="img-fluid">
+                            </div>
+                            <div class="text-center mt-3">
+                                <button class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-arrow-repeat"></i> 旋转</button>
+                                <button class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-zoom-in"></i> 缩放</button>
+                                <button class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-square"></i> 切面</button>
+                                <button class="btn btn-outline-primary btn-sm"><i class="bi bi-eye"></i> 透明化</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细分析结果 -->
+                    <h4 class="section-title mt-5"><i class="bi bi-clipboard2-pulse me-2"></i>详细分析报告</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card result-card">
+                                <div class="card-header">异常发现</div>
+                                <div class="card-body">
+                                    <ul class="findings-list">
+                                        <li>
+                                            <strong>右肺上叶结节</strong>
+                                            <span class="badge bg-danger float-end">高风险</span>
+                                            <div class="mt-1">
+                                                <small>尺寸: 0.8cm | 密度: -25HU | 形态: 不规则</small>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <strong>左肺下叶钙化灶</strong>
+                                            <span class="badge bg-warning text-dark float-end">中风险</span>
+                                            <div class="mt-1">
+                                                <small>尺寸: 0.3cm | 密度: 180HU | 形态: 规则</small>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <strong>轻度肺气肿改变</strong>
+                                            <span class="badge bg-success float-end">低风险</span>
+                                            <div class="mt-1">
+                                                <small>范围: 局限 | 程度: 轻度</small>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card result-card mt-3">
+                                <div class="card-header">量化分析</div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">结节体积增长趋势</label>
+                                        <img src="https://via.placeholder.com/500x200?text=增长趋势图" alt="增长趋势" class="img-fluid">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">密度分布直方图</label>
+                                        <img src="https://via.placeholder.com/500x200?text=密度分布图" alt="密度分布" class="img-fluid">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card result-card">
+                                <div class="card-header">AI诊断建议</div>
+                                <div class="card-body">
+                                    <h5>右肺上叶结节 (0.8cm)</h5>
+                                    <div class="alert alert-warning mt-2">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        <strong>建议:</strong> 该结节具有中度恶性风险特征，建议3个月后复查CT或进一步行PET-CT检查
+                                    </div>
+
+                                    <h5 class="mt-4">左肺下叶钙化灶 (0.3cm)</h5>
+                                    <div class="alert alert-info mt-2">
+                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                        <strong>建议:</strong> 考虑为良性钙化灶，建议年度随访
+                                    </div>
+
+                                    <h5 class="mt-4">轻度肺气肿改变</h5>
+                                    <div class="alert alert-secondary mt-2">
+                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                        <strong>建议:</strong> 与吸烟史相关，建议戒烟并定期肺功能检查
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card result-card mt-3">
+                                <div class="card-header">相似病例参考</div>
+                                <div class="card-body">
+                                    <div class="list-group">
+                                        <a href="#" class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">病例 #CT20230145</h6>
+                                                <small>匹配度 87%</small>
+                                            </div>
+                                            <p class="mb-1">45岁男性，0.9cm肺结节，病理证实为腺癌</p>
+                                            <small class="text-muted">李医生, 华山医院, 2022-08-12</small>
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">病例 #CT20221287</h6>
+                                                <small>匹配度 79%</small>
+                                            </div>
+                                            <p class="mb-1">50岁男性，0.7cm肺结节，随访2年稳定</p>
+                                            <small class="text-muted">王医生, 中山医院, 2021-05-03</small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 医生诊断区域 -->
+                    <h4 class="section-title mt-5"><i class="bi bi-pencil-square me-2"></i>医生诊断意见</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label for="diagnosisConclusion" class="form-label">诊断结论</label>
+                                    <select class="form-select" id="diagnosisConclusion">
+                                        <option selected>请选择诊断结论</option>
+                                        <option>考虑良性病变，建议随访</option>
+                                        <option>可疑恶性，建议进一步检查</option>
+                                        <option>高度怀疑恶性，建议活检</option>
+                                        <option>其他</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="diagnosisDetails" class="form-label">详细意见</label>
+                                    <textarea class="form-control" id="diagnosisDetails" rows="3" placeholder="请输入详细诊断意见..."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nextStep" class="form-label">下一步建议</label>
+                                    <select class="form-select" id="nextStep" multiple>
+                                        <option selected>3个月后复查CT</option>
+                                        <option>6个月后复查CT</option>
+                                        <option>PET-CT检查</option>
+                                        <option>穿刺活检</option>
+                                        <option>多学科会诊</option>
+                                    </select>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-outline-secondary me-2"><i class="bi bi-save me-1"></i>保存草稿</button>
+                                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>提交报告</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 初始化工具提示
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // 影像对比滑块功能
+        const slider = document.querySelector('.comparison-slider');
+        const divider = document.querySelector('.comparison-slider .divider');
+        const beforeImage = document.querySelector('.comparison-slider img:last-child');
+
+        if (divider && beforeImage) {
+            divider.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                document.addEventListener('mousemove', moveDivider);
+                document.addEventListener('mouseup', stopDivider);
+            });
+
+            function moveDivider(e) {
+                const sliderRect = slider.getBoundingClientRect();
+                let position = e.clientX - sliderRect.left;
+
+                if (position < 0) position = 0;
+                if (position > sliderRect.width) position = sliderRect.width;
+
+                const percent = position / sliderRect.width * 100;
+                divider.style.left = percent + '%';
+                beforeImage.style.width = percent + '%';
+            }
+
+            function stopDivider() {
+                document.removeEventListener('mousemove', moveDivider);
+                document.removeEventListener('mouseup', stopDivider);
+            }
+        }
+    </script>
+</body>
+</html>

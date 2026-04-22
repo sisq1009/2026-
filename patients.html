@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能医疗影像分析系统 - 患者管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="js/scripts.js" defer></script>
+    <style>
+        .patient-card {
+            transition: all 0.3s;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+        }
+
+        .patient-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .timeline-vertical {
+            border-left: 2px solid #dee2e6;
+            margin-left: 16px;
+        }
+
+        .medical-history-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .patient-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .patient-status.online {
+            background: #27ae60;
+            box-shadow: 0 0 8px #27ae60;
+        }
+
+        .patient-timeline-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .patient-timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -6px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+         <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-heart-pulse me-2"></i>智能医疗影像分析系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-bell"></i></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-question-circle"></i></a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>张医生
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>个人资料</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html"><i class="bi bi-house-door"></i> 首页</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="upload.html"><i class="bi bi-upload"></i> 上传影像</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="analysis.html"><i class="bi bi-file-earmark-medical"></i> 分析结果</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="cases.html"><i class="bi bi-archive"></i> 病例库</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="patients.html"><i class="bi bi-people"></i> 患者管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="statistics.html"><i class="bi bi-graph-up"></i> 统计分析</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="help.html"><i class="bi bi-question-circle"></i> 帮助中心</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 py-3">
+                <div class="main-content">
+                    <!-- 操作工具栏 -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="input-group w-25">
+                            <input type="text" class="form-control" placeholder="搜索患者...">
+                            <button class="btn btn-outline-secondary">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPatientModal">
+                            <i class="bi bi-person-plus me-2"></i>新建患者
+                        </button>
+                    </div>
+
+                    <!-- 患者列表 -->
+                    <div class="row g-4">
+                        <!-- 患者卡片 -->
+                        <div class="col-md-4">
+                            <div class="card patient-card h-100">
+                                <div class="patient-status online"></div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start">
+                                        <img src="https://via.placeholder.com/100x100?text=患者"
+                                             class="patient-avatar me-3">
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">李某某（P23001）</h5>
+                                            <div class="d-flex small text-muted mb-2">
+                                                <div class="me-3"><i class="bi bi-gender-male me-1"></i>男</div>
+                                                <div><i class="bi bi-calendar me-1"></i>45岁</div>
+                                            </div>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <span class="badge bg-primary">糖尿病</span>
+                                                <span class="badge bg-warning">高血压</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="patient-timeline">
+                                        <div class="patient-timeline-item">
+                                            <small class="text-muted">2023-07-20</small>
+                                            <div class="fw-bold">胸部CT检查</div>
+                                            <small class="text-muted">发现0.8cm肺结节</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <button class="btn btn-sm btn-outline-primary me-2">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 更多患者卡片... -->
+                    </div>
+
+                    <!-- 分页导航 -->
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled"><a class="page-link" href="#">上一页</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">下一页</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建患者模态框 -->
+    <div class="modal fade" id="newPatientModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>新建患者档案</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="patientForm">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">患者姓名</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">身份证号</label>
+                                <input type="text" class="form-control" pattern="\d{17}[\dX]">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">性别</label>
+                                <select class="form-select" required>
+                                    <option value="">请选择</option>
+                                    <option>男</option>
+                                    <option>女</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">出生日期</label>
+                                <input type="date" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">联系电话</label>
+                                <input type="tel" class="form-control" pattern="[0-9]{11}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">既往病史</label>
+                                <textarea class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">保存档案</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/scripts.js"></script>
+    <script>
+        document.getElementById('logoutBtn').addEventListener('click', function () {
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        });
+        // 患者表单验证
+        document.getElementById('patientForm').addEventListener('submit', (e) => {
+            if (!e.target.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            e.target.classList.add('was-validated');
+        });
+
+        // 动态加载患者数据
+        const mockPatients = [
+            {
+                id: 'P23001',
+                name: '李某某',
+                gender: '男',
+                age: 45,
+                conditions: ['糖尿病', '高血压'],
+                lastVisit: '2023-07-20'
+            },
+            // 更多模拟数据...
+        ];
+
+        function renderPatients(patients) {
+            const container = document.querySelector('.row.g-4');
+            container.innerHTML = patients.map(patient => `
+                <div class="col-md-4">
+                    <div class="card patient-card h-100">
+                        <div class="patient-status online"></div>
+                        <div class="card-body">
+                            <!-- 患者卡片内容 -->
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 初始化加载
+        renderPatients(mockPatients);
+    </script>
+</body>
+</html>
